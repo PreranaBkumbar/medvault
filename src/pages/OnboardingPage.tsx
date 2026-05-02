@@ -47,118 +47,153 @@ const OnboardingPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center py-6">
+    <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center py-12 px-6 relative overflow-hidden bg-slate-50/50">
+      {/* Background Decor */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-100/30 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-100/30 rounded-full blur-[120px] pointer-events-none" />
+
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-lg"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-xl relative z-10"
       >
-        <Card className="shadow-lg border-t-4 border-t-blue-600">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center">Complete Your Profile</CardTitle>
-            <p className="text-center text-gray-500 mt-1">Hello {profile.name}, let's finish your setup as a {profile.role}.</p>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="text-center mb-12">
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600 mb-3">Gateway Verification</p>
+          <h1 className="text-5xl font-black text-slate-900 tracking-tighter leading-none mb-4">
+            FINALIZING <span className="text-blue-600">IDENTITY</span>.
+          </h1>
+          <p className="text-slate-400 font-medium max-w-sm mx-auto">
+            Hello {profile.name}, we need a few more biometric details to secure your account.
+          </p>
+        </div>
+
+        <Card className="bg-white rounded-[48px] border-2 border-white shadow-2xl shadow-indigo-100/50 p-10 md:p-12">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="space-y-6">
               {profile.role === 'patient' ? (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                  <div className="grid grid-cols-2 gap-6">
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-4">Age</label>
                       <input
                         type="number"
                         name="age"
                         required
                         value={formData.age}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="e.g. 25"
+                        className="w-full px-6 py-4 rounded-3xl bg-slate-50 border-2 border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-all font-mono text-sm"
+                        placeholder="25"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-4">Gender</label>
                       <select
                         name="gender"
                         required
                         value={formData.gender}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                        className="w-full px-6 py-4 rounded-3xl bg-slate-50 border-2 border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-all font-bold text-sm appearance-none"
                       >
                         <option value="">Select</option>
                         <option value="male">Male</option>
                         <option value="female">Female</option>
                         <option value="other">Other</option>
                       </select>
-                    </div>
+                    </motion.div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-4">Blood Group</label>
                     <select
                       name="bloodGroup"
                       required
                       value={formData.bloodGroup}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="w-full px-6 py-4 rounded-3xl bg-slate-50 border-2 border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-all font-bold text-sm appearance-none"
                     >
-                      <option value="">Select</option>
-                      <option value="A+">A+</option>
-                      <option value="A-">A-</option>
-                      <option value="B+">B+</option>
-                      <option value="B-">B-</option>
-                      <option value="O+">O+</option>
-                      <option value="O-">O-</option>
-                      <option value="AB+">AB+</option>
-                      <option value="AB-">AB-</option>
+                      <option value="">Select Type</option>
+                      {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map(bg => (
+                        <option key={bg} value={bg}>{bg}</option>
+                      ))}
                     </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Residential Address</label>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-4">Residential Coordinates</label>
                     <input
                       name="address"
                       required
                       value={formData.address}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-8 py-5 rounded-[32px] bg-slate-50 border-2 border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-all font-medium text-sm"
                       placeholder="Street, City, Country"
                     />
-                  </div>
+                  </motion.div>
                 </>
               ) : (
                 <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Professional Degree</label>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-4">Professional Degree</label>
                     <input
                       name="degree"
                       required
                       value={formData.degree}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-8 py-5 rounded-[32px] bg-slate-50 border-2 border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-all font-bold italic text-sm"
                       placeholder="e.g. MBBS, MD, PhD"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Practice/Hospital Address</label>
+                  </motion.div>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 ml-4">Practice Address</label>
                     <input
                       name="address"
                       required
                       value={formData.address}
                       onChange={handleChange}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-8 py-5 rounded-[32px] bg-slate-50 border-2 border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-all font-medium text-sm"
                       placeholder="Clinic/Hospital Name, City"
                     />
-                  </div>
+                  </motion.div>
                 </>
               )}
+            </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-all shadow-lg active:scale-95 disabled:bg-gray-400 mt-4"
-              >
-                {loading ? 'Submitting...' : 'Complete Registration'}
-              </button>
-            </form>
-          </CardContent>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-20 bg-slate-900 text-white font-black rounded-[40px] hover:bg-black transition-all flex items-center justify-center gap-4 shadow-2xl shadow-slate-200 active:scale-95 disabled:bg-slate-300 relative group overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 skew-x-12" />
+              <span className="text-sm tracking-[0.2em] uppercase">
+                {loading ? 'SYNCHRONIZING...' : 'ACTIVATE VAULT'}
+              </span>
+            </button>
+          </form>
         </Card>
       </motion.div>
     </div>

@@ -15,7 +15,8 @@ import {
   Heart,
   Plus,
   X as XIcon,
-  Calendar
+  Calendar,
+  Zap
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { doc, updateDoc, serverTimestamp, collection, onSnapshot, query, where, addDoc } from 'firebase/firestore';
@@ -23,6 +24,43 @@ import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/DashboardCard';
 import { motion, AnimatePresence } from 'motion/react';
 import { Reminder } from '../types';
+
+const LifeScore: React.FC<{ score: number }> = ({ score }) => {
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+
+  return (
+    <div className="relative w-28 h-28 flex items-center justify-center">
+      <div className="absolute inset-0 bg-blue-600/5 rounded-full animate-pulse" />
+      <svg className="w-full h-full -rotate-90">
+        <circle
+          cx="56"
+          cy="56"
+          r={radius}
+          className="stroke-slate-100 fill-none"
+          strokeWidth="8"
+        />
+        <motion.circle
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 2, ease: "easeOut", delay: 0.5 }}
+          cx="56"
+          cy="56"
+          r={radius}
+          className="stroke-blue-600 fill-none"
+          strokeWidth="8"
+          strokeDasharray={circumference}
+          strokeLinecap="round"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <p className="text-2xl font-black text-slate-900 tracking-tighter">{score}</p>
+        <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Pulse</p>
+      </div>
+    </div>
+  );
+};
 
 const PatientDashboard: React.FC = () => {
   const { profile, refreshProfile } = useAuth();
@@ -101,214 +139,305 @@ const PatientDashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-24 max-w-5xl mx-auto">
+    <div className="space-y-8 pb-32 max-w-6xl mx-auto px-4">
+      {/* Background Decor */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 overflow-hidden">
+        <Activity className="absolute top-20 right-[-10%] w-96 h-96" />
+        <Heart className="absolute bottom-20 left-[-10%] w-80 h-80" />
+      </div>
+
       {/* Header Section */}
       <motion.div 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="flex flex-col md:flex-row md:items-end justify-between gap-4"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10"
       >
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 mb-1">Health Passport</p>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Hii, {profile.name.split(' ')[0]}!</h1>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600">Bio-Identity Active</p>
+          </div>
+          <h1 className="text-[56px] leading-none font-black text-gray-900 tracking-tighter">
+            Hii, {profile.name.split(' ')[0]} <span className="text-blue-600">.</span>
+          </h1>
         </div>
-        <div className="flex items-center gap-3 bg-white border border-gray-100 p-2 rounded-2xl shadow-sm">
-          <div className={`w-3 h-3 rounded-full ${profile.isSharing ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-            {profile.isSharing ? 'Live Sharing Active' : 'Sharing Disabled'}
-          </span>
-          <button 
-            onClick={toggleSharing}
-            className="ml-2 text-[10px] font-bold text-blue-600 hover:underline"
-          >
-            {profile.isSharing ? 'Disable' : 'Enable'}
-          </button>
+        <div className="flex items-center gap-4 bg-white border-2 border-slate-50 p-3 pr-5 rounded-[28px] shadow-sm">
+          <div className={`p-3 rounded-2xl ${profile.isSharing ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'}`}>
+            {profile.isSharing ? <ShieldCheck className="w-5 h-5" /> : <ShieldOff className="w-5 h-5" />}
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">
+              {profile.isSharing ? 'Network Sharing' : 'Offline Mode'}
+            </p>
+            <button 
+              onClick={toggleSharing}
+              className={`text-xs font-black uppercase tracking-widest ${profile.isSharing ? 'text-emerald-600' : 'text-blue-600'} hover:opacity-70 transition-opacity`}
+            >
+              {profile.isSharing ? 'Stop Broadcast' : 'Go Live'}
+            </button>
+          </div>
         </div>
       </motion.div>
 
       {/* Bento Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 relative z-10">
         
-        {/* QR Access Key - Mobile First */}
-        <Card className="md:col-span-1 flex flex-col items-center justify-center p-6 bg-white border-2 border-slate-50 md:row-span-2">
-          <p className="text-[8px] font-black uppercase tracking-widest text-gray-300 mb-4">Patient Access QR</p>
-          <div className="relative group p-4 bg-slate-50 rounded-[40px] border-4 border-white shadow-xl transition-transform hover:scale-102">
-            <QRCodeSVG 
-              value={`${window.location.origin}/doctor/patient/${profile.uid}`} 
-              size={120}
-              level="H"
-              includeMargin={false}
-              className="grayscale brightness-110 contrast-125"
-            />
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 rounded-[40px]">
-              <Share2 className="w-8 h-8 text-blue-600" />
-            </div>
+        {/* Vitality Card */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1 }}
+          className="md:col-span-4 lg:col-span-3 bg-white rounded-[48px] p-8 border-2 border-slate-50 shadow-sm flex flex-col items-center justify-between min-h-[340px]"
+        >
+          <div className="text-center">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 mb-8">Bio-Vitality Score</p>
+            <LifeScore score={92} />
           </div>
-          <div className="mt-6 text-center">
-            <p className="text-[10px] font-mono font-black text-blue-600 tracking-widest bg-blue-50 px-3 py-1 rounded-full border border-blue-100 mb-2">
-              ID: {profile.uid.slice(-6).toUpperCase()}
-            </p>
-            <p className="text-[9px] text-gray-400 font-bold leading-tight">Patient UID</p>
+          
+          <div className="w-full space-y-3">
+             <div className="bg-slate-50 p-4 rounded-3xl flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Sync Status</span>
+                </div>
+                <span className="text-[10px] font-black text-emerald-600 uppercase">100%</span>
+             </div>
+             <p className="text-[9px] text-slate-400 font-bold text-center leading-relaxed">
+               Your health score is based on recent check-ups and reminder compliance.
+             </p>
           </div>
-        </Card>
+        </motion.div>
 
-        {/* Action Pills */}
-        <div className="md:col-span-3 grid grid-cols-2 gap-4">
-          <Link 
-            to="/patient/upload" 
-            className="bg-blue-600 hover:bg-blue-700 text-white p-5 rounded-[32px] transition-all flex items-center gap-4 group shadow-xl shadow-blue-100 active:scale-95"
-          >
-            <div className="bg-white/20 p-3 rounded-2xl group-hover:scale-110 transition-transform">
-              <Upload className="w-6 h-6" />
+        {/* Global Access Link */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className="md:col-span-8 lg:col-span-4 bg-slate-900 rounded-[48px] p-8 text-white relative overflow-hidden group"
+        >
+          <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600 rounded-full blur-[80px] -mr-24 -mt-24 opacity-30 group-hover:opacity-50 transition-opacity" />
+          
+          <div className="relative h-full flex flex-col justify-between space-y-8">
+            <div className="flex justify-between items-start">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center">
+                <Share2 className="w-6 h-6 text-blue-400" />
+              </div>
+              <div className="bg-white/10 px-3 py-1 rounded-full border border-white/10">
+                <p className="text-[8px] font-black uppercase tracking-widest text-blue-300 animate-pulse">Live Link</p>
+              </div>
             </div>
-            <div className="text-left">
-              <p className="font-black text-sm uppercase tracking-widest">Upload</p>
-              <p className="text-[10px] opacity-70">Add medical files</p>
+
+            <div>
+              <h3 className="text-2xl font-black tracking-tight mb-2 uppercase italic leading-none">Global Access <br /><span className="text-blue-500">Key .</span></h3>
+              <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">Patient UID: {profile.uid.slice(-12).toUpperCase()}</p>
             </div>
-          </Link>
-          <Link 
-            to="/patient/timeline" 
-            className="bg-slate-900 hover:bg-slate-800 text-white p-5 rounded-[32px] transition-all flex items-center gap-4 group shadow-xl active:scale-95"
-          >
-            <div className="bg-white/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">
-              <Clock className="w-6 h-6" />
+
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white rounded-3xl shrink-0">
+                <QRCodeSVG 
+                  value={`${window.location.origin}/doctor/patient/${profile.uid}`} 
+                  size={80}
+                  level="H"
+                  className="grayscale contrast-125"
+                />
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed font-bold">
+                Doctors can scan this code to securely view your authorized records in real-time.
+              </p>
             </div>
-            <div className="text-left">
-              <p className="font-black text-sm uppercase tracking-widest">History</p>
-              <p className="text-[10px] opacity-70">View records</p>
-            </div>
-          </Link>
+          </div>
+        </motion.div>
+
+        {/* Navigation Actions */}
+        <div className="md:col-span-12 lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="h-full">
+            <Link 
+              to="/patient/upload" 
+              className="h-full bg-blue-600 hover:bg-blue-700 text-white p-8 rounded-[48px] transition-all flex flex-col justify-between group shadow-2xl shadow-blue-100 active:scale-95 relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:scale-150 transition-transform" />
+              <div className="bg-white/20 w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform relative z-10">
+                <Upload className="w-7 h-7" />
+              </div>
+              <div className="relative z-10">
+                <p className="font-black text-xl uppercase tracking-widest mb-1">Add Data</p>
+                <p className="text-xs opacity-70 font-bold uppercase tracking-wider">Sync records</p>
+              </div>
+            </Link>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }} className="h-full">
+            <Link 
+              to="/patient/timeline" 
+              className="h-full bg-slate-100 hover:bg-slate-200 text-slate-900 p-8 rounded-[48px] transition-all flex flex-col justify-between group active:scale-95 border-2 border-transparent hover:border-slate-300"
+            >
+              <div className="bg-slate-900 text-white w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Clock className="w-7 h-7" />
+              </div>
+              <div>
+                <p className="font-black text-xl uppercase tracking-widest mb-1">Timeline</p>
+                <p className="text-xs opacity-50 font-bold uppercase tracking-wider">Record logs</p>
+              </div>
+            </Link>
+          </motion.div>
         </div>
 
-        {/* Health Metrics & Reminders */}
-        <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Reminders & Health Pills */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="md:col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6"
+        >
           {/* Reminders List */}
-          <Card className="rounded-[40px] border-none bg-indigo-50/50 shadow-none overflow-hidden h-full">
-            <CardHeader className="p-6 pb-0 flex flex-row items-center justify-between border-none">
-              <CardTitle className="text-xs font-black uppercase tracking-widest text-indigo-400 flex items-center gap-2">
-                <Bell className="w-4 h-4" /> Reminders
-              </CardTitle>
+          <Card className="rounded-[48px] border-none bg-indigo-50/50 shadow-none overflow-hidden min-h-[400px]">
+            <CardHeader className="p-8 pb-0 flex flex-row items-center justify-between border-none">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <CardTitle className="text-xs font-black uppercase tracking-widest text-indigo-600">Protocol Reminders</CardTitle>
+              </div>
               <button 
                 onClick={() => setShowAddReminder(true)}
-                className="p-2 bg-indigo-100 text-indigo-600 rounded-xl hover:scale-110 transition-all"
+                className="p-3 bg-white text-indigo-600 rounded-2xl hover:scale-110 transition-all shadow-sm border border-indigo-100"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-5 h-5" />
               </button>
             </CardHeader>
-            <CardContent className="p-6 space-y-3">
+            <CardContent className="p-8 space-y-4">
               {loadingReminders ? (
-                <div className="text-center py-4 text-xs font-bold text-indigo-300 uppercase tracking-widest">Syncing...</div>
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                   <div className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
+                   <div className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Hydrating state...</div>
+                </div>
               ) : reminders.length === 0 ? (
-                <div className="text-center py-8 opacity-50 space-y-3">
-                  <div className="w-12 h-12 bg-indigo-100 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto">
-                    <Bell className="w-6 h-6" />
+                <div className="text-center py-12 opacity-50 space-y-4">
+                  <div className="w-16 h-16 bg-white text-indigo-200 rounded-[32px] flex items-center justify-center mx-auto shadow-sm">
+                    <Bell className="w-8 h-8" />
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">All set for now!</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Zero active alerts</p>
                 </div>
               ) : (
-                reminders.map(rem => (
-                  <motion.div 
-                    layout
-                    key={rem.id} 
-                    className={`p-4 rounded-3xl flex items-center justify-between shadow-sm border transition-all ${
-                      rem.completed ? 'bg-gray-50 border-gray-100 opacity-60' : 'bg-white border-indigo-100/50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 rounded-xl ${
-                        rem.completed ? 'bg-gray-200 text-gray-400' : 
-                        rem.type === 'medicine' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'
-                      }`}>
-                        {rem.type === 'medicine' ? <Activity className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
-                      </div>
-                      <div>
-                        <p className={`text-sm font-black transition-all ${rem.completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                          {rem.title}
-                        </p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{rem.time}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => toggleReminder(rem.id, rem.completed)}
-                      className={`w-6 h-6 rounded-lg border-2 transition-all flex items-center justify-center ${
-                        rem.completed ? 'bg-indigo-600 border-indigo-600' : 'border-indigo-100 hover:border-indigo-400'
+                <div className="space-y-3">
+                  {reminders.map(rem => (
+                    <motion.div 
+                      layout
+                      key={rem.id} 
+                      className={`p-5 rounded-[32px] flex items-center justify-between shadow-sm border transition-all ${
+                        rem.completed ? 'bg-white/40 border-slate-100 grayscale opacity-40' : 'bg-white border-transparent'
                       }`}
                     >
-                      {rem.completed && <Plus className="w-4 h-4 text-white rotate-45" />}
-                    </button>
-                  </motion.div>
-                ))
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-2xl ${
+                          rem.completed ? 'bg-slate-100 text-slate-400' : 
+                          rem.type === 'medicine' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'
+                        }`}>
+                          {rem.type === 'medicine' ? <Activity className="w-5 h-5" /> : <Bell className="w-5 h-5" />}
+                        </div>
+                        <div>
+                          <p className={`text-sm font-black transition-all ${rem.completed ? 'text-slate-400 line-through' : 'text-slate-900'}`}>
+                            {rem.title}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Clock className="w-3 h-3 text-slate-300" />
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{rem.time}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => toggleReminder(rem.id, rem.completed)}
+                        className={`w-10 h-10 rounded-2xl border-2 transition-all flex items-center justify-center ${
+                          rem.completed ? 'bg-indigo-600 border-indigo-600' : 'border-slate-100 hover:border-indigo-400'
+                        }`}
+                      >
+                        <Plus className={`w-5 h-5 transition-transform ${rem.completed ? 'text-white rotate-45' : 'text-slate-300'}`} />
+                      </button>
+                    </motion.div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
 
           {/* Quick Metrics */}
-          <div className="grid grid-cols-1 gap-4 h-full">
-            <div className="bg-white border border-gray-100 p-6 rounded-[40px] flex items-center justify-between shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="bg-rose-50 p-4 rounded-3xl text-rose-500">
-                  <Heart className="w-7 h-7" />
+          <div className="grid grid-cols-1 gap-6 h-full">
+            <motion.div whileHover={{ y: -5 }} className="bg-white border-2 border-slate-50 p-8 rounded-[48px] flex items-center justify-between shadow-sm group">
+              <div className="flex items-center gap-6">
+                <div className="bg-rose-50 p-5 rounded-[32px] text-rose-500 group-hover:scale-110 transition-transform">
+                  <Heart className="w-8 h-8" />
                 </div>
                 <div>
-                  <p className="text-3xl font-black text-gray-900 font-mono tracking-tighter">72<span className="text-xs ml-1 uppercase opacity-40">bpm</span></p>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Heart Rate</p>
+                  <p className="text-4xl font-black text-gray-900 font-mono tracking-tighter">72<span className="text-sm ml-1 uppercase opacity-40 font-sans">bpm</span></p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Average Heart Rate</p>
                 </div>
               </div>
-              <div className="h-10 w-24 bg-rose-50 rounded-xl overflow-hidden relative opacity-50">
-                {/* Mock Sparkline */}
-                <div className="absolute inset-0 flex items-center justify-around px-2">
+              <div className="h-12 w-28 bg-rose-50 rounded-2xl overflow-hidden relative opacity-50">
+                <div className="absolute inset-0 flex items-end justify-around px-2 pb-2">
                   {[40, 70, 45, 90, 65, 80].map((h, i) => (
-                    <div key={i} className="w-1 bg-rose-200 rounded-full" style={{ height: `${h}%` }} />
+                    <div key={i} className="w-2 bg-rose-200 rounded-full animate-pulse" style={{ height: `${h}%`, animationDelay: `${i * 0.2}s` }} />
                   ))}
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-white border border-gray-100 p-6 rounded-[40px] flex items-center justify-between shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="bg-blue-50 p-4 rounded-3xl text-blue-500">
-                  <Droplets className="w-7 h-7" />
+            <motion.div whileHover={{ y: -5 }} className="bg-white border-2 border-slate-50 p-8 rounded-[48px] flex items-center justify-between shadow-sm group">
+              <div className="flex items-center gap-6">
+                <div className="bg-blue-50 p-5 rounded-[32px] text-blue-500 group-hover:scale-110 transition-transform">
+                  <Droplets className="w-8 h-8" />
                 </div>
                 <div>
-                  <p className="text-3xl font-black text-gray-900 font-mono tracking-tighter">1.8<span className="text-xs ml-1 uppercase opacity-40">L</span></p>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Hydration</p>
+                  <p className="text-4xl font-black text-gray-900 font-mono tracking-tighter">1.8<span className="text-sm ml-1 uppercase opacity-40 font-sans">L</span></p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Hydration Index</p>
                 </div>
               </div>
-              <div className="h-2 w-24 bg-blue-50 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500 w-[70%]" />
+              <div className="h-3 w-28 bg-blue-50 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: '70%' }}
+                  transition={{ duration: 1, delay: 1 }}
+                  className="h-full bg-blue-500" 
+                />
               </div>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Enhanced Verification Bar */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.6 }}
+          className="md:col-span-12 lg:col-span-4 bg-emerald-600 rounded-[48px] p-8 text-white relative overflow-hidden flex flex-col justify-between"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full blur-3xl -mr-16 -mt-16" />
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="font-black text-lg uppercase tracking-tight leading-none">Identity <br />Verified</h3>
+              <p className="text-[10px] uppercase font-black opacity-60 tracking-widest mt-1">Tier 1 Secure</p>
             </div>
           </div>
-        </div>
 
-        {/* Medical Stats Card */}
-        <Card className="md:col-span-4 bg-slate-900 border-none rounded-[40px] text-white p-8 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-[80px] -mr-32 -mt-32 opacity-30 pointer-events-none" />
-          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-8">
-            <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
-                  <ShieldCheck className="w-6 h-6 text-blue-400" />
-                </div>
-                <h3 className="font-black text-sm uppercase tracking-widest">Medical ID Verified</h3>
-              </div>
-              <div className="grid grid-cols-2 gap-8">
+          <div className="space-y-4">
+             <div className="flex justify-between items-end border-b border-white/20 pb-4">
                 <div>
-                  <p className="text-xs opacity-50 mb-1 uppercase tracking-widest font-bold">Blood Type</p>
-                  <p className="text-2xl font-black text-blue-400">{profile.bloodGroup}</p>
+                  <p className="text-[8px] uppercase font-black opacity-60 tracking-widest mb-1">Blood Type</p>
+                  <p className="text-3xl font-black tracking-tighter">{profile.bloodGroup}</p>
                 </div>
-                <div>
-                  <p className="text-xs opacity-50 mb-1 uppercase tracking-widest font-bold">Age / Sex</p>
-                  <p className="text-2xl font-black">{profile.age} / {profile.gender}</p>
+                <div className="text-right">
+                  <p className="text-[8px] uppercase font-black opacity-60 tracking-widest mb-1">Age / Sex</p>
+                  <p className="text-xl font-black tracking-tighter">{profile.age} <span className="opacity-40">/</span> {profile.gender}</p>
                 </div>
-              </div>
-            </div>
-            <div className="flex-1 max-w-sm">
-              <p className="text-xs opacity-50 mb-1 uppercase tracking-widest font-bold">Address</p>
-              <p className="text-lg font-medium leading-relaxed italic line-clamp-2">“{profile.address}”</p>
-            </div>
+             </div>
+             <p className="text-[10px] font-bold text-emerald-100 italic leading-relaxed">
+               “{profile.address}”
+             </p>
           </div>
-        </Card>
+        </motion.div>
 
       </div>
 

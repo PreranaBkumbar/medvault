@@ -109,144 +109,162 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center py-8">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
-        <Card className="shadow-xl border-t-4 border-t-blue-600">
-          <CardHeader>
-            <div className="flex justify-center mb-6">
-              <div className="bg-blue-100 p-4 rounded-full">
-                <Activity className="text-blue-600 w-8 h-8" />
-              </div>
+    <div className="fixed inset-0 bg-white overflow-hidden flex flex-col md:flex-row">
+      {/* Left Column: Brand & Hero */}
+      <div className="hidden md:flex md:w-1/2 bg-slate-900 border-r border-slate-800 p-12 flex-col justify-between relative overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600 rounded-full blur-[120px] opacity-20 animate-pulse" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-emerald-600 rounded-full blur-[100px] opacity-10" />
+        </div>
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-12">
+            <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <Activity className="text-white w-6 h-6" />
             </div>
-            <CardTitle className="text-center text-2xl font-bold">
-              {isLogin ? 'Welcome Back' : 'Create Account'}
-            </CardTitle>
-            <p className="text-center text-gray-500 mt-2">
-              Portable health records, anywhere.
+            <span className="text-2xl font-black tracking-tighter text-white">MedVault</span>
+          </div>
+
+          <div className="space-y-6">
+            <motion.h1 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-[80px] leading-[0.9] font-black tracking-tighter text-white"
+            >
+              YOUR <br />
+              <span className="text-blue-500">HEALTH</span> <br />
+              PORTABLE.
+            </motion.h1>
+            <p className="text-slate-400 text-lg max-w-sm leading-relaxed font-medium">
+              The world's first truly private, high-performance medical identity layer. Built for patients, verified by doctors.
             </p>
-          </CardHeader>
-          
-          <CardContent className="p-8">
-            {!isLogin && (
-              <div className="mb-6 animate-in fade-in slide-in-from-top-4 duration-500 text-left">
-                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">I am a...</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setRole('patient')}
-                    className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all shadow-sm ${
-                      role === 'patient' 
-                        ? 'border-blue-600 bg-blue-50 text-blue-700 ring-4 ring-blue-50' 
-                        : 'border-gray-50 bg-gray-50 text-gray-400'
-                    }`}
-                  >
-                    <User className="w-5 h-5" />
-                    <span className="font-bold text-sm">Patient</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRole('doctor')}
-                    className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all shadow-sm ${
-                      role === 'doctor' 
-                        ? 'border-blue-600 bg-blue-50 text-blue-700 ring-4 ring-blue-50' 
-                        : 'border-gray-50 bg-gray-50 text-gray-400'
-                    }`}
-                  >
-                    <Activity className="w-5 h-5" />
-                    <span className="font-bold text-sm">Doctor</span>
-                  </button>
-                </div>
-              </div>
-            )}
+          </div>
+        </div>
 
-            <div className="space-y-4 mb-8">
-              <button
-                onClick={handleGoogleSignIn}
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 font-bold py-4 rounded-2xl hover:bg-gray-50 transition-all active:scale-95 shadow-sm disabled:opacity-50"
-              >
-                <img src="https://www.gstatic.com/firebase/anonymous/google.svg" alt="Google" className="w-5 h-5" />
-                {isLogin ? 'Login with Google' : `Sign Up as ${role.charAt(0).toUpperCase() + role.slice(1)}`}
-              </button>
-              
-              <div className="flex items-center gap-4">
-                <div className="flex-1 h-px bg-gray-100"></div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">OR USE EMAIL</span>
-                <div className="flex-1 h-px bg-gray-100"></div>
+        <div className="relative z-10 flex gap-12">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Protocol</p>
+            <p className="text-sm font-bold text-white">AES-256 GCM</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Availability</p>
+            <p className="text-sm font-bold text-white">99.9% Global</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Audit</p>
+            <p className="text-sm font-bold text-white">Verified</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Column: Auth Forms */}
+      <div className="flex-1 bg-white flex flex-col justify-center items-center p-8 md:p-24 overflow-y-auto">
+        <div className="w-full max-w-sm space-y-8">
+          <div className="text-center md:text-left">
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+              {isLogin ? 'Access your Vault' : 'Initialize Identity'}
+            </h2>
+            <p className="text-sm font-bold text-slate-400 mt-2">
+              {isLogin ? 'Enter your credentials to decrypt your health data.' : 'Create your decentralized medical identifier.'}
+            </p>
+          </div>
+
+          {!isLogin && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Identity Type</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setRole('patient')}
+                  className={`p-4 rounded-3xl border-2 transition-all flex flex-col gap-2 items-start group ${
+                    role === 'patient' 
+                      ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-lg shadow-blue-100' 
+                      : 'border-slate-50 bg-slate-50 text-slate-400 hover:border-slate-100'
+                  }`}
+                >
+                  <User className={`w-6 h-6 ${role === 'patient' ? 'text-blue-600 animate-bounce' : 'text-slate-300'}`} />
+                  <span className="text-xs font-black uppercase tracking-widest">Patient</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('doctor')}
+                  className={`p-4 rounded-3xl border-2 transition-all flex flex-col gap-2 items-start group ${
+                    role === 'doctor' 
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-700 shadow-lg shadow-emerald-100' 
+                      : 'border-slate-50 bg-slate-50 text-slate-400 hover:border-slate-100'
+                  }`}
+                >
+                  <Activity className={`w-6 h-6 ${role === 'doctor' ? 'text-emerald-600 animate-pulse' : 'text-slate-300'}`} />
+                  <span className="text-xs font-black uppercase tracking-widest">Professional</span>
+                </button>
               </div>
             </div>
+          )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-6">
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="w-full h-14 flex items-center justify-center gap-3 bg-white border-2 border-slate-100 text-slate-700 font-black rounded-3xl hover:bg-slate-50 hover:border-slate-200 transition-all active:scale-95 disabled:opacity-50 text-sm tracking-tight"
+            >
+              <img src="https://www.gstatic.com/firebase/anonymous/google.svg" alt="Google" className="w-5 h-5" />
+              Continue with Google
+            </button>
+            
+            <div className="relative flex items-center gap-2">
+              <div className="flex-1 h-[2px] bg-slate-50"></div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 whitespace-nowrap">Secure Email Protocol</span>
+              <div className="flex-1 h-[2px] bg-slate-50"></div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="space-y-4 pb-2 text-left"
-                >
-                  <div>
-                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Full Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-gray-100 border text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-sm"
-                      placeholder="e.g. Alex Smith"
-                    />
-                  </div>
-                </motion.div>
+                <div className="space-y-1">
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full h-14 px-6 rounded-3xl bg-slate-50 border-2 border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-all font-black text-sm tracking-tight placeholder:text-slate-300"
+                    placeholder="FULL NAME"
+                  />
+                </div>
               )}
 
-              <div>
-                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Email Address</label>
+              <div className="space-y-1">
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-gray-100 border text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-sm"
-                  placeholder="name@example.com"
+                  className="w-full h-14 px-6 rounded-3xl bg-slate-50 border-2 border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-all font-black text-sm tracking-tight placeholder:text-slate-300"
+                  placeholder="EMAIL ADDRESS"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Password</label>
+              <div className="space-y-1">
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-5 py-4 rounded-2xl bg-gray-50 border-gray-100 border text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-sm"
-                  placeholder="••••••••"
+                  className="w-full h-14 px-6 rounded-3xl bg-slate-50 border-2 border-transparent focus:border-blue-600 focus:bg-white focus:outline-none transition-all font-black text-sm tracking-tight placeholder:text-slate-300"
+                  placeholder="PASSWORD"
                 />
               </div>
 
               <AnimatePresence>
                 {error && (
                   <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className={`${error.isProviderError ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-600'} p-4 rounded-2xl text-xs font-bold space-y-2`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={`${error.isProviderError ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-600'} p-4 rounded-3xl text-[10px] font-bold`}
                   >
-                    <div className="flex items-center gap-3">
-                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <div className="flex items-center gap-3 uppercase tracking-widest">
+                      <AlertCircle className="w-4 h-4" />
                       <span>{error.message}</span>
                     </div>
-                    {error.isProviderError && (
-                      <a 
-                        href="https://console.firebase.google.com/" 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="block underline hover:opacity-80"
-                      >
-                        Open Firebase Console
-                      </a>
-                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -254,34 +272,40 @@ const LoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white font-bold py-5 rounded-[24px] hover:bg-blue-700 transition-all active:scale-95 disabled:bg-gray-200 disabled:text-gray-400 shadow-xl shadow-blue-100 mt-4 text-lg"
+                className={`w-full h-16 text-white font-black rounded-[32px] transition-all active:scale-95 disabled:grayscale shadow-2xl flex items-center justify-center gap-2 group relative overflow-hidden ${
+                  role === 'patient' ? 'bg-blue-600 shadow-blue-200' : 'bg-emerald-600 shadow-emerald-200'
+                }`}
               >
-                {loading ? 'Authenticating...' : (isLogin ? 'Login to Vault' : 'Create Secure ID')}
+                <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
+                <span className="relative tracking-widest uppercase text-sm">
+                  {loading ? 'Validating...' : (isLogin ? 'Unlock Vault' : 'Create Identity')}
+                </span>
+                {!loading && <Activity className="w-4 h-4 relative group-hover:animate-pulse" />}
               </button>
             </form>
-          </CardContent>
-          
-          <CardFooter className="flex justify-center flex-col items-center gap-4 py-6 bg-gray-50 rounded-b-2xl border-none">
+          </div>
+
+          <div className="pt-8 text-center border-t border-slate-50">
             <button
               onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-600 font-semibold hover:underline"
+              className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-colors"
             >
-              {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Login'}
+              {isLogin ? "Transfer to Identity Creation" : 'Switch to Existing Vault'}
             </button>
-          </CardFooter>
-        </Card>
-      </motion.div>
-      <div className="mt-8 text-center px-4 max-w-sm">
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left shadow-sm">
-          <p className="text-[10px] uppercase font-black tracking-[0.2em] text-amber-600 mb-2">Final Setup Required</p>
-          <p className="text-xs text-amber-800 leading-relaxed">
-            Firebase requires a one-time manual activation of sign-in methods:
-          </p>
-          <ol className="text-[10px] text-amber-700 mt-2 list-decimal list-inside space-y-1">
-            <li>Open <a href="https://console.firebase.google.com/" target="_blank" rel="noreferrer" className="underline font-bold">Firebase Console</a></li>
-            <li>Go to <b>Authentication</b> → <b>Sign-in method</b></li>
-            <li>Enable <b>Email/Password</b> and <b>Google</b></li>
-          </ol>
+          </div>
+        </div>
+
+        {/* Global Security Disclaimer for Dev Environment */}
+        <div className="mt-auto pt-12 max-w-sm">
+          <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100">
+             <div className="flex items-center gap-2 mb-2">
+               <AlertCircle className="w-3 h-3 text-amber-600" />
+               <p className="text-[10px] uppercase font-black tracking-widest text-amber-600">Dev Environment Protocol</p>
+             </div>
+             <p className="text-[9px] text-slate-500 font-bold leading-relaxed">
+               Ensure <b>Email/Google</b> sign-in methods are activated in your Firebase console under Authentication.
+             </p>
+          </div>
         </div>
       </div>
     </div>
