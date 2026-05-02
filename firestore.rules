@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 0.1 Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 1. Users Collection
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.uid == userId
+          && data.name is string && data.name.size() <= 100
+          && data.email is string && data.email.size() <= 100
+          && data.role in ['patient', 'doctor']
+          && (data.role != 'patient' || data.isSharing is bool)
+          && data.onboarded is bool;
+      }
+
+      // Get profile: Owner or Doctor view if sharing is true
+      allow get: if isOwner(userId) || (isSignedIn() && existing().role == 'patient' && existing().isSharing == true);
+      
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) && isValidUser(incoming()) && incoming().onboarded == false;
+      
+      allow update: if isOwner(userId) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'age', 'gender', 'bloodGroup', 'address', 'degree', 'onboarded', 'isSharing', 'updatedAt'])
+      );
+    }
+
+    // 2. Records Collection
+    match /records/{recordId} {
+      function isValidRecord(data) {
+        return data.patientId is string && data.patientId.size() <= 128
+          && data.fileURL is string && data.fileURL.size() <= 2000
+          && data.type in ['prescription', 'report']
+          && data.createdAt == request.time;
+      }
+
+      // Patient view or Doctor view
+      // Note: get() in list rules is allowed but limited.
+      allow list: if isSignedIn() && (
+        resource.data.patientId == request.auth.uid 
+        || (get(/databases/$(database)/documents/users/$(resource.data.patientId)).data.isSharing == true)
+      );
+
+      allow get: if isSignedIn() && (
+        resource.data.patientId == request.auth.uid
+        || (get(/databases/$(database)/documents/users/$(resource.data.patientId)).data.isSharing == true)
+      );
+
+      allow create: if isSignedIn() && incoming().patientId == request.auth.uid && isValidRecord(incoming());
+      
+      allow delete: if isSignedIn() && existing().patientId == request.auth.uid;
+    }
+
+    // 3. Reminders Collection
+    match /reminders/{reminderId} {
+      function isValidReminder(data) {
+        return data.userId == request.auth.uid
+          && data.title is string && data.title.size() <= 200
+          && data.time is string && data.time.size() <= 10
+          && data.type in ['medicine', 'appointment', 'generic'];
+      }
+
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isOwner(resource.data.userId);
+      
+      allow create: if isSignedIn() && isValidReminder(incoming());
+      allow update: if isOwner(existing().userId) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['completed', 'title', 'time', 'days'])
+      );
+      allow delete: if isOwner(existing().userId);
+    }
+  }
+}
